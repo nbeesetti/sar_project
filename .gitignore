@@ -4,3 +4,5 @@
 /dataSources/
 /dataSources.local.xml
 .env
+/tests/__pycache__
+src/sar_project/agents/__pycache__

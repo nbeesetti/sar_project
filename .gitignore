@@ -6,3 +6,4 @@
 .env
 /tests/__pycache__
 src/sar_project/agents/__pycache__
+.vscode

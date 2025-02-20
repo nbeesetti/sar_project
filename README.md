@@ -12,6 +12,73 @@ Each student or team will choose a specific role within the SAR ecosystem and im
 ## How to Submit
 Please submit a link to your clone of the repository to Canvas. 
 
+
+## V1 Documentation for AssetManager Agent
+Latest version: V1 (last updated: 02/19/25)
+
+Author: Neeraja Beesetti
+
+The asset manager agent is responsible for maintaining an inventory of all assets, supporting CRUD (Create, Read, Update, Delete) operations on assets, and allowing teams to allocate and return a certain quantity of assets. 
+
+Examples on how to use this agent can be inferred from the documentation below as well as the pytests under /tests/test_asset_agent.py
+
+### Creating and Initializing the Asset Manager
+```python
+agent = AssetManagerAgent(populate=True) # default is populate False
+```
+Automatically initializes its AssetKnowledgeBase.
+"populate" is an optional field, setting it as True will populate its AssetKnowledgeBase with some test data
+
+### Requests
+Making requests = asset_agent.process_request({...})
+
+All responses contain a boolean field "success" indicating whether the request was carried out successfully.
+If success is False, there will be an additional field "error" with an appropriate error message. 
+
+Supported message requests:
+```python
+# 1. find_asset_id --- Users can find the asset_id if they provide the asset name (assumes 1 to 1 relation)
+agent.process_request({"message_type": "find_asset_id", "name": "Drone"}) 
+# example output = {"success": True, "asset_id": "A001"}
+
+-----------
+# 2. get_all_assets --- Users can list out all assets in KB (in readable format)
+agent.process_request({"message_type": "get_all_assets"})
+# example output = {'all_assets': dict_items([('A001', Asset Drone (A001) of {'Aerial', 'UAV', 'Camera'} at SAR Base ((0, 0)) with 5 total units, 5 available, allocation status: (False, None)), ('A002', Asset Helicopter (A002) of {'Aerial', 'Vehicle'} at SAR Base ((0, 0)) with 1 total units, 1 available, allocation status: (False, None))])}
+
+-----------
+# 3. add_asset --- Users can add new assets, name and types are required params, rest are optional
+agent.process_request({"message_type": "add_asset", "asset": {"id": "G001", "name": "Flashlight", "types": {"Tool", "Light", "Ground"}, "quantity": 2, "location_name": "SAR Base"} })
+# example output = {'success': True, 'asset_added': "{'id': 'G001', 'name': 'Flashlight', 'types': {'Ground', 'Light', 'Tool'}, 'quantity': 2, 'location_name': 'SAR Base'}"}
+
+-----------
+# 4. update_asset --- Users can update the location, quantity, and types of existing assets
+agent.process_request({"message_type": "update_asset", "update_field": "location", "name": "Drone", "location": "Donner Pass"})
+# example output = {'success': True, 'asset_updated': "Asset Drone (A001) of {'Surveillance', 'UAV', 'Camera', 'Aerial'} at Donner Pass ((0, 0)) with 6 total units, 5 available, allocation status: (False, None)"}
+
+-----------
+# 5. remove_asset --- Users can remove assets entirely
+agent.process_request({"message_type": "remove_asset", "id": "G002"})
+# example output = {"success": True, "asset_removed": "G002"}
+
+-----------
+# 6. allocate --- Users can allocate certain quantities of an asset to a certain team
+# V1 assumes an asset can only be allocated to one team
+agent.process_request({"message_type": "allocate", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 2})
+# example output = {'success': True, 'message': 'Asset G003 allocated to team GroundTroop1, 4 units remaining'}
+
+-----------
+# 7. return --- Users place a request that a certain quantity of an asset has been returned by a certain team
+# In V1, returning more than the original quantity updates the original quantity value
+agent.process_request({"message_type": "return", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 1})
+# example output = {'success': True, 'message': 'Returned 1 units, 1 units still in use'}
+
+-----------
+# If the request is not successful, response output will look something like this:
+# example output = {'success': False, 'error': 'actual error message will be written here'}
+```
+
+
 ## Prerequisites
 
 - Python 3.8 or higher

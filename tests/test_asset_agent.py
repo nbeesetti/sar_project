@@ -4,7 +4,7 @@ from sar_project.agents.assetmanager_agent import AssetManagerAgent
 class TestAssetManagerAgent:
     @pytest.fixture
     def agent(self):
-        return AssetManagerAgent()
+        return AssetManagerAgent(populate=True)
 
     def test_initialization(self, agent):
         assert agent.name == "asset_manager"

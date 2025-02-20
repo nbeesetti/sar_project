@@ -11,7 +11,7 @@ Responses contains a boolean "success" field to indicate if processing request w
 """
 
 class AssetManagerAgent(SARBaseAgent):
-    def __init__(self, name="asset_manager"):
+    def __init__(self, name="asset_manager", populate=False):
         super().__init__(
             name=name,
             role="Asset Manager",
@@ -27,7 +27,7 @@ class AssetManagerAgent(SARBaseAgent):
             knowledge_base = AssetKnowledgeBase()
         )
 
-        self.populate_kb()   
+        if populate: self.populate_kb()   
         self.update_status("active") 
 
     def populate_kb(self):

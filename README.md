@@ -35,6 +35,10 @@ Making requests = asset_agent.process_request({...})
 All responses contain a boolean field "success" indicating whether the request was carried out successfully.
 If success is False, there will be an additional field "error" with an appropriate error message. 
 
+```bash
+All responses are python dictionaries, not JSON. See examples below.
+```
+
 Supported message requests:
 ```python
 # 1. find_asset_id --- Users can find the asset_id if they provide the asset name (assumes 1 to 1 relation)

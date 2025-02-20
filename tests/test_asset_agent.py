@@ -73,7 +73,6 @@ class TestAssetManagerAgent:
         output = agent.process_request({"message_type": "update_asset", "update_field": "location", "name": "Drone", "location": (39.21, -120.425)})
         assert agent.kb.get_asset("A001").location_GPS == (39.21, -120.425)
 
-
     def test_request_remove_asset(self, agent):
         agent.process_request({"message_type": "add_asset", 
                                         "asset": {"id": "G002", 
@@ -83,21 +82,73 @@ class TestAssetManagerAgent:
                                                   "location_name": "SAR Base"}
                                         })
         
-        print(agent.kb.get_all_assets())
+        # print(agent.kb.get_all_assets())
 
         output = agent.process_request({"message_type": "remove_asset", "id": "G002"})
-        print(output)
+        # print(output)
         assert output["success"] == True
         assert "Binoculars" not in str(agent.kb.get_all_assets())
 
-        print(agent.kb.get_all_assets())
+        # print(agent.kb.get_all_assets())
 
         output = agent.process_request({"message_type": "remove_asset", "id": "G002"})
-        print(output)
+        # print(output)
         assert output["success"] == False
         assert output["error"] == "Asset ID not found"
 
         output = agent.process_request({"message_type": "remove_asset", "name": "Binoculars"})
-        print(output)
+        # print(output)
         assert output["success"] == False
         assert output["error"] == "Asset not found"
+
+    def test_request_allocate(self, agent):
+        # temporary asset for testing
+        agent.process_request({"message_type": "add_asset", 
+                                        "asset": {"id": "G003", 
+                                                  "name": "Sticks", 
+                                                  "types": {"Tool", "Ground"}, 
+                                                  "quantity": 6, 
+                                                  "location_name": "SAR Base"}
+                                        })
+        
+        output = agent.process_request({"message_type": "allocate", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 2})
+        assert output["success"] == True
+        assert agent.kb.get_asset("G003").quantity == 6
+        assert agent.kb.get_asset("G003").unallocated_quantity == 4
+
+        output = agent.process_request({"message_type": "allocate", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 10})
+        assert output["success"] == False
+        assert output["error"] == "Not enough units available, 4 units remaining"
+
+        agent.process_request({"message_type": "remove_asset", "id": "G003"})
+    
+    def test_request_return(self, agent):
+        # temporary asset for testing
+        agent.process_request({"message_type": "add_asset", 
+                                        "asset": {"id": "G003", 
+                                                  "name": "Sticks", 
+                                                  "types": {"Tool", "Ground"}, 
+                                                  "quantity": 6, 
+                                                  "location_name": "SAR Base"}
+                                        })
+        agent.process_request({"message_type": "allocate", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 2})
+        assert agent.kb.get_asset("G003").unallocated_quantity == 4
+
+        print(agent.kb.get_all_assets())
+        output = agent.process_request({"message_type": "return", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 1})
+        assert output["success"] == True
+        assert agent.kb.get_asset("G003").quantity == 6
+        assert agent.kb.get_asset("G003").unallocated_quantity == 5
+
+        output = agent.process_request({"message_type": "return", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 1})
+        assert output["success"] == True
+        assert agent.kb.get_asset("G003").quantity == 6
+        assert agent.kb.get_asset("G003").unallocated_quantity == 6
+        assert output["message"] == "Returned all G003 units"
+
+        output = agent.process_request({"message_type": "return", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 1})
+        assert output["success"] == True
+        assert output["message"] == "Returned 1 extra units, updated asset quantity"
+        assert agent.kb.get_asset("G003").quantity == 7
+        assert agent.kb.get_asset("G003").unallocated_quantity == 7
+

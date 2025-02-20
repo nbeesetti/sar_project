@@ -84,6 +84,10 @@ class AssetManagerAgent(SARBaseAgent):
                 return self.update_asset(message)
             elif "remove_asset" in m:
                 return self.remove_asset(message)
+            elif "allocate" in m:
+                return self.allocate_asset(message)
+            elif "return" in m:
+                return self.return_asset(message)
             else:
                 return {"error": "Unknown request type"}
         except Exception as e:
@@ -154,4 +158,26 @@ class AssetManagerAgent(SARBaseAgent):
         self.kb.remove_asset(asset_id)
         return {"success": True, "asset_removed": asset_id}
 
+    def allocate_asset(self, message):
+        asset_id = message.get("asset_id")
+        team_id = message.get("team_id")
+        quantity = message.get("quantity")
+        if not asset_id or not team_id or not quantity:
+            return {"success": False, "error": "asset_id, team_id, and quantity are required"}
+        success, msg = self.kb.allocate_asset(asset_id, team_id, quantity)
+        if not success:
+            return {"success": False, "error": msg}
+        else:
+            return {"success": True, "message": msg}
     
+    def return_asset(self, message):
+        asset_id = message.get("asset_id")
+        team_id = message.get("team_id")
+        quantity = message.get("quantity")
+        if not asset_id or not team_id or not quantity:
+            return {"success": False, "error": "asset_id, team_id, and quantity are required"}
+        success, msg = self.kb.return_asset(asset_id, team_id, quantity)
+        if not success:
+            return {"success": success, "error": msg}
+        else:
+            return {"success": True, "message": msg}

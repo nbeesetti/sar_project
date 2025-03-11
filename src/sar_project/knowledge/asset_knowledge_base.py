@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 
 class AssetStatus:
@@ -17,7 +16,7 @@ class UsageLogAction:
     RETURNED = "return"
 
 class Asset:
-    def __init__(self, id=uuid.uuid4(), name="", types=set(), quantity=1, location_name="", location_GPS=(0,0)):
+    def __init__(self, id, name, types=set(), quantity=1, location_name="", location_GPS=(0,0)):
         self.id = id
         self.name = name
         self.types = types
@@ -25,7 +24,7 @@ class Asset:
         # self.status = AssetStatus.AVAILABLE
         self.location_GPS = location_GPS # (latitude, longitude) in Decimal Degrees coordinates
         self.location_name = location_name
-        self.allocated = (False, None) # or (True, team_id)
+        self.allocated = None # or team_id
         self.unallocated_quantity = self.quantity
     
     def __repr__(self):
@@ -59,10 +58,9 @@ class AssetKnowledgeBase:
         if asset_id in self.assets_by_id:
             return self.assets_by_id[asset_id]
         else:
-            # print("Asset not found")
             return None
 
-    def add_asset(self, name, types: set, id=uuid.uuid4(), quantity=1, location_name="", location_GPS=(0,0)):
+    def add_asset(self, name, types: set, id, quantity=1, location_name="", location_GPS=(0,0)):
         ''' Required parameters: name, types'''
         asset = Asset(id=id, name=name, types=types, quantity=quantity, location_name=location_name, location_GPS=location_GPS)
         self.assets_by_id[asset.id] = asset
@@ -125,12 +123,15 @@ class AssetKnowledgeBase:
         asset = self.get_asset(asset_id)
         if asset:
             if asset.unallocated_quantity < quantity:
-                return (False, f"Not enough units available, {asset.unallocated_quantity} units remaining")
+                raise Exception(f"Not enough units available, {asset.unallocated_quantity} units remaining")
+                # return (False, f"Not enough units available, {asset.unallocated_quantity} units remaining")
             asset.unallocated_quantity -= quantity
-            asset.allocated = (True, team_id)
+            asset.allocated = team_id
             self.log_allocation(asset_id, team_id, quantity=quantity)
-            return (True, f"Asset {asset_id} allocated to team {team_id}, {asset.unallocated_quantity} units remaining")
-        return (False, "Asset not found")
+            return f"Asset {asset_id} allocated to team {team_id}, {asset.unallocated_quantity} units remaining"
+        else: 
+            raise Exception("Asset not found")
+        # return (False, "Asset not found")
     
     def log_return(self, asset_id, team_id, **kwargs):
         if self.get_asset(asset_id):
@@ -140,7 +141,9 @@ class AssetKnowledgeBase:
         # TO DO: change allocations to be list of (team_id, quantity) tuples to track who owns how many
         # for now, assume only one team can allocate an asset, regardless of remaining quantity
         asset = self.get_asset(asset_id)
-        if quantity <= 0: return (False, "Quantity must be greater than 0")
+        if quantity <= 0:
+            raise Exception("Quantity must be greater than 0")
+            # return (False, "Quantity must be greater than 0")
         if asset:
             asset.unallocated_quantity += quantity
             self.log_return(asset_id, team_id, quantity=quantity)
@@ -148,17 +151,19 @@ class AssetKnowledgeBase:
                 # returned more than original quantity
                 extra = asset.unallocated_quantity - asset.quantity
                 asset.quantity = asset.unallocated_quantity
-                asset.allocated = (False, None)
-                return (True, f"Returned {extra} extra units, updated asset quantity")
+                asset.allocated = None
+                return f"Returned {extra} extra units, updated asset quantity"
             elif asset.unallocated_quantity < asset.quantity:
                 # some returned, some assets still allocated
                 still_allocated = asset.quantity - asset.unallocated_quantity
-                return (True, f"Returned {quantity} units, {still_allocated} units still in use")
+                return f"Returned {quantity} units, {still_allocated} units still in use"
             else:
                 # returned all
-                asset.allocated = (False, None)
-                return (True, f"Returned all {asset_id} units")
-        return (False, "Asset not found")
+                asset.allocated = None
+                return f"Returned all {asset_id} units"
+        else:
+            raise Exception("Asset not found")
+        # return (False, "Asset not found")
 
     def get_asset_usage_log(self, asset_id):
         if self.get_asset(asset_id):

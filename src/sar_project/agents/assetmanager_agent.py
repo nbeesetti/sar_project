@@ -18,12 +18,7 @@ class AssetManagerAgent(SARBaseAgent):
             system_message="""You are a asset manager for SAR operations. Your role is to:
             1. Maintain a comprehensive inventory of all assets
             2. Allocate assets to teams and tasks
-            3. Schedule asset maintenance
-            4. Monitor location and status of all assets
-            5. Track asset efficiency
-            6. Manage asset lifecycle
-            7. Make sure assets meet regulations and safety standards
-            8. Generate reports on asset status, utilization, and performance""",
+            3. Monitor location and status of all assets""",
             knowledge_base = AssetKnowledgeBase()
         )
 
@@ -164,11 +159,11 @@ class AssetManagerAgent(SARBaseAgent):
         quantity = message.get("quantity")
         if not asset_id or not team_id or not quantity:
             return {"success": False, "error": "asset_id, team_id, and quantity are required"}
-        success, msg = self.kb.allocate_asset(asset_id, team_id, quantity)
-        if not success:
-            return {"success": False, "error": msg}
-        else:
+        try:
+            msg = self.kb.allocate_asset(asset_id, team_id, quantity)
             return {"success": True, "message": msg}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
     
     def return_asset(self, message):
         asset_id = message.get("asset_id")
@@ -176,8 +171,9 @@ class AssetManagerAgent(SARBaseAgent):
         quantity = message.get("quantity")
         if not asset_id or not team_id or not quantity:
             return {"success": False, "error": "asset_id, team_id, and quantity are required"}
-        success, msg = self.kb.return_asset(asset_id, team_id, quantity)
-        if not success:
-            return {"success": success, "error": msg}
-        else:
+
+        try:
+            msg = self.kb.return_asset(asset_id, team_id, quantity)
             return {"success": True, "message": msg}
+        except Exception as e:
+            return {"success": False, "error": str(e)}

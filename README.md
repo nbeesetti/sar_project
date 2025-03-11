@@ -1,5 +1,14 @@
 # Search and Rescue (SAR) Agent Framework - CSC 581
 
+## Insights
+
+I learned that the asset manager V1 implementation was good at performing the proposed CRUD operations with assets but could use improvement with the design choices of the implementation and with syntax or logic choices of the code. I realized that before I narrowed down on the functionality of the asset manager and knowledge base implementation, I should have taken a step back and assessed my design choices were the best given the time. For example, I forgot to remove the points that weren't implemented in the system message and also to narrow down the tuple containing None and False to avoid redundancy, neither didn't adversely affect anything. I also realized that using uuid looks simple to implement in terms of code but makes it IDs too complicated for the user, so I should've taken a step back and justified to myself when and why I would be using UUIDs. A few suggestions had an issue with the uniqueness of asset id and asset name, which is understandable since making elements unique adds complexity for the user but I wanted to keep it this way for V1 as it makes sense for an Asset to have an associate ID for querying and a name for the user to lookup and use. Another useful insight was that I should have considered using a database for my knowledge base as it would resolve many of my consistency-related design choice issues, but given the context of this project and the amount of work I put in, I wanted to stick with using a simple dictionary based knowledge base. 
+
+## Modifications
+
+I fixed the system message to only include the points that I actually implemented since I forgot to clean it up before. I also removed the UUIDs to not overcomplicate the values and instead opt for having the user input their preferred ID and Name (also an area for improvement for V2). I removed the default arguments for the ID and Name of an Asset so that the user is required to enter these values. I changed the .allocated parameter of the Asset class (and its uses) to be a simple None or string value instead of redundant tuple. I also modifed all of my return statements which return a tuple containing the success boolean and the associated message to be an Exception for cases where success if False. Essentially, replacing the error paths to be Exceptions with messages and then changing the function calls to be inside try except blocks to make it idiomatically clear that the function was not successful. 
+ 
+
 ## Introduction
 
 This framework is for CSC 581 students to develop intelligent agents supporting the AI4S&R project. Students can create specialized agents for various SAR roles such as those listed in this spreadsheet:
@@ -13,8 +22,8 @@ Each student or team will choose a specific role within the SAR ecosystem and im
 Please submit a link to your clone of the repository to Canvas. 
 
 
-## V1 Documentation for AssetManager Agent
-Latest version: V1 (last updated: 02/19/25)
+## V1.2 Documentation for AssetManager Agent
+Latest version: V1.2 (last updated: 03/10/25)
 
 Author: Neeraja Beesetti
 
@@ -41,7 +50,7 @@ All responses are python dictionaries, not JSON. See examples below.
 
 Supported message requests:
 ```python
-# 1. find_asset_id --- Users can find the asset_id if they provide the asset name (assumes 1 to 1 relation)
+# 1. find_asset_id --- Users can find the asset_id if they provide the asset name (V1.2 assumes 1 to 1 relation)
 agent.process_request({"message_type": "find_asset_id", "name": "Drone"}) 
 # example output = {"success": True, "asset_id": "A001"}
 
@@ -51,7 +60,8 @@ agent.process_request({"message_type": "get_all_assets"})
 # example output = {'all_assets': dict_items([('A001', Asset Drone (A001) of {'Aerial', 'UAV', 'Camera'} at SAR Base ((0, 0)) with 5 total units, 5 available, allocation status: (False, None)), ('A002', Asset Helicopter (A002) of {'Aerial', 'Vehicle'} at SAR Base ((0, 0)) with 1 total units, 1 available, allocation status: (False, None))])}
 
 -----------
-# 3. add_asset --- Users can add new assets, name and types are required params, rest are optional
+# !!! Important Note: Asset ID and Name must be uniquely entered by user (in V1.2)
+# 3. add_asset --- Users can add new assets. id, name, and types are required params, rest are optional
 agent.process_request({"message_type": "add_asset", "asset": {"id": "G001", "name": "Flashlight", "types": {"Tool", "Light", "Ground"}, "quantity": 2, "location_name": "SAR Base"} })
 # example output = {'success': True, 'asset_added': "{'id': 'G001', 'name': 'Flashlight', 'types': {'Ground', 'Light', 'Tool'}, 'quantity': 2, 'location_name': 'SAR Base'}"}
 
@@ -67,13 +77,13 @@ agent.process_request({"message_type": "remove_asset", "id": "G002"})
 
 -----------
 # 6. allocate --- Users can allocate certain quantities of an asset to a certain team
-# V1 assumes an asset can only be allocated to one team
+# V1.2 assumes an asset can only be allocated to one team
 agent.process_request({"message_type": "allocate", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 2})
 # example output = {'success': True, 'message': 'Asset G003 allocated to team GroundTroop1, 4 units remaining'}
 
 -----------
 # 7. return --- Users place a request that a certain quantity of an asset has been returned by a certain team
-# In V1, returning more than the original quantity updates the original quantity value
+# In V1.2, returning more than the original quantity updates the original quantity value
 agent.process_request({"message_type": "return", "asset_id": "G003", "team_id": "GroundTroop1", "quantity": 1})
 # example output = {'success': True, 'message': 'Returned 1 units, 1 units still in use'}
 
